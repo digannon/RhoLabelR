@@ -134,7 +134,7 @@ public class Graph {
 	}
 	
 	public boolean setLabel(int index, int label){
-		int i, j, num, edgeLabel;
+		int i, num, edgeLabel;
 		//Set Label
 		que[index].setLabel(label);
 		//Remove From Heap

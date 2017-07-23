@@ -64,15 +64,6 @@ public class Node {
 		}
 	}
 	
-	public void on(int label){
-		if( ! option[label] ){
-			option[label] = true;
-			free++;
-			if(label < minOption)
-				minOption = label;
-		}
-	}
-	
 	public void setNeighbor(int neighborIndex, Node neighbor){ 
 		downStream[neighborIndex] = neighbor;
 		neighbor.setUpStream(this);
