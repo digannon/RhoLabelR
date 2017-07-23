@@ -1,5 +1,3 @@
-import java.util.LinkedList;
-
 public class Node {
 	private int label;
 	private boolean[] option;

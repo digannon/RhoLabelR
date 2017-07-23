@@ -1,8 +1,174 @@
+/*    This code can be copied and pasted to https://www.compilejava.net/
+ *    Below, all you have to do is 
+ * 1. type your graph
+ * 2. hit compile & execute at the bottom
+ *
+ * You can also set to directed graphs, multigraphs, or complete-tripartite decompose mode
+ * You can also preset node labels
+*/
+
 import java.util.LinkedList;
 
-import javax.swing.JFrame;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+public class HelloWorld {
+  
+  //Input a graph as {{Node 0 neighbors}, {Node 1 neighbors}, ...}, if directed, neighbors are downstream
+  
+  public static final int[][] Put_Your_graph_Here = {{1, 4, 5, 6}, {0, 2, 7, 8}, {1, 3, 9, 10}, {2, 4, 11, 12}, {0, 3, 13, 14}, {0, 7, 13, 15}, {0, 8, 14, 16}, {1, 5, 9, 17}, {1, 6, 10, 18}, {2, 7, 11, 19}, {2, 8, 12, 20}, {3, 9, 13, 21}, {3, 10, 14, 22},
+  {4, 5, 11, 23}, {4, 6, 12, 24}, {5, 16, 17, 23}, {6, 15, 18, 24}, {7, 15, 18, 19}, {8, 16, 17, 20}, {9, 17, 20, 21}, {10, 18, 19, 22}, {11, 19, 22, 23}, {12, 20, 21, 24}, {13, 15, 21, 24}, {14, 16, 22, 23}};
+	
+  public static final boolean True_If_Directed_Graph = false;
+	
+  public static final int Number_of_Edges_Between_Two_Nodes = 1;
+	
+  public static final boolean Decompose_A_Complete_Graph = true; //As opposed to a Complete Tripartite K_{N, 3} decomposition (only works if N is even)
+	
+  //Set Node labels (optional) as {{A, labelA}, {B, labelB}, ...} where A and B are nodes
+  //To set no labels, make this "{{}}"
+  public static final int[][] Put_Your_Node_Labels_Here = {{0, 1}, {1, 2}};
+
+  
+  
+  
+  //-----------------------------------------------------------------------------------------------------------------------------------
+	public static void main(String[] args){
+		Graph G;
+		if(Decompose_A_Complete_Graph)
+			G = new Graph(Put_Your_graph_Here, -1, True_If_Directed_Graph, Number_of_Edges_Between_Two_Nodes);
+		else{
+			G = new Graph(Put_Your_graph_Here, -2, false, 3);
+			for(int i = 3; i < G.K()/2; i = i + 3)
+				G.killEdgeOption(i);
+		}
+		for(int i = 0; i < Put_Your_Node_Labels_Here.length; i++){
+			if(Put_Your_Node_Labels_Here[i].length > 0)
+				G.setHumanLabel(Put_Your_Node_Labels_Here[i][0], Put_Your_Node_Labels_Here[i][1]);
+		}
+		
+		if(G.que(G.N()-1).label() < 0){ //Nothing has yet been labeled
+			//Find node with max degree and place it in front
+			int maxIndex = 0;
+			int max = G.que(0).numDownStream() + G.que(0).numUpStream();
+			int test;
+			for(int i = 1; i < G.N(); i++){
+				test = G.que(i).numDownStream() + G.que(i).numUpStream();
+				if(test > max){
+					max = test;
+					maxIndex = i;
+				}
+			}
+			G.swap(0, maxIndex);
+			
+			//Swap a neighbor of Node with the last place in the que
+			if(G.que(0).numDownStream() > 0)
+				G.swap(G.N()-1, G.que(0).downStream(0).heapIndex());
+			else if(G.que(0).numUpStream() > 0)
+				G.swap(G.N()-1, G.que(0).upStream(0).heapIndex());
+			
+			//Force the first label
+			G.setLabel(0, 0);
+		}
+		G.solve();
+	}
+	
+}
+
+public class Node {
+	private int label;
+	private boolean[] option;
+	private int K;
+	private int free;
+	private Node[] downStream;
+	private Node[] upStream;
+	private int minOption;
+	private int humanIndex;
+	private int heapIndex;
+	
+	public int label(){               return label;}
+	public boolean option(int label){ return option[label];}
+	public int K(){                   return K;}
+	public int free(){                return free;}
+	public int numDownStream(){       return downStream.length;}
+	public int minOption(){           return minOption;}
+	public int humanIndex(){          return humanIndex;}
+	public Node downStream(int index){  return downStream[index];}
+	public Node upStream(int index){   return upStream[index];}
+	public int heapIndex(){           return heapIndex;}
+	public int numUpStream(){         return upStream.length;}
+	
+	public void setLabel(int label){                           this.label = label; }
+	public void setHumanIndex(int index){                      this.humanIndex = index;}
+	public void setHeapIndex(int index){                       this.heapIndex = index;}
+	
+	public Node(int K, int numDownStream, int numUpStream){
+		label = -1;
+		option = new boolean[K];
+		for(int i = 0; i < K; i++)
+			option[i] = true;
+		minOption = 0;
+		
+		this.K = K;
+		free = K;
+		
+		downStream = new Node[numDownStream];
+		upStream = new Node[numUpStream];
+	}
+	
+	public Node(Node node){
+		label = node.label();
+		K = node.K();
+		option = new boolean[K];
+		for(int i = 0; i < K; i++)
+			option[i] = node.option(i);
+		minOption = node.minOption();
+		
+		free = node.free();
+
+		downStream = new Node[node.numDownStream()];
+		upStream = new Node[node.numUpStream()];
+		heapIndex = node.heapIndex();
+		humanIndex = node.humanIndex();
+	}
+	
+	public void off(int label){
+		if( option[label] ){
+			option[label] = false;
+			free--;
+			while(minOption < K && !option[minOption])
+				minOption++;
+		}
+	}
+	
+	public void on(int label){
+		if( ! option[label] ){
+			option[label] = true;
+			free++;
+			if(label < minOption)
+				minOption = label;
+		}
+	}
+	
+	public void setNeighbor(int neighborIndex, Node neighbor){ 
+		downStream[neighborIndex] = neighbor;
+		neighbor.setUpStream(this);
+	}
+	
+	public void setUpStream(Node upNode){
+		for(int i = 0; i < numUpStream(); i++)
+			if(upStream[i] == null){
+				upStream[i] = upNode;
+				return;
+			}
+	}
+	
+	public String optionString(){
+		String string = "";
+		for(int i = 0; i < K; i++)
+			if(option[i])
+				string = string + i + " ";
+		return string;
+	}
+	
+}
 
 public class Graph {
 	private int N;           //number of nodes
@@ -342,12 +508,7 @@ public class Graph {
 	
 	public boolean solve(){
 		if(que[0].label() >= 0){
-			JFrame window = new JFrame("Found One!");
-			window.setSize(400, 200);
-			JTextArea text = new JTextArea(this.toString());
-			JScrollPane scroll = new JScrollPane(text);
-			window.add(scroll);
-			window.setVisible(true);
+			System.out.print(this);
 			return true;
 		}
 		if(que[0].free() <= 0){

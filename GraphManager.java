@@ -3,18 +3,18 @@ import java.util.LinkedList;
 
 public class GraphManager {
 	LinkedList<String> nameList;
-	Hashtable graphTable;
+	Hashtable<String, int[][]> graphTable;
 	int numGraphs;
 	
 	LinkedList labelList;
-	Hashtable labelTable;
+	Hashtable<String, int[][]> labelTable;
 	int numLabels;
 	
 	public GraphManager(){
-		graphTable = new Hashtable();
-		nameList = new LinkedList();
-		labelList = new LinkedList();
-		labelTable = new Hashtable();
+		graphTable = new Hashtable<String, int[][]>();
+		nameList = new LinkedList<String>();
+		labelList = new LinkedList<String>();
+		labelTable = new Hashtable<String, int[][]>();
 		
 		int[][] blank = {{}};
 		String string = toString(blank);
